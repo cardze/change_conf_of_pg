@@ -26,6 +26,19 @@ def send_query(params:dict, query:str, output_filename:str):
             for row in ret_query:
                 writer.writerow(row)
 
+def send_query_explain(params:dict, query:str):
+    explain_query = "EXPLAIN (ANALYZE, COSTS, VERBOSE, BUFFERS, FORMAT JSON)\n"+query
+    with psycopg2.connect(**params) as conn:
+        # create a cursor
+        cur = conn.cursor()
+        # execute a statement
+        cur.execute(explain_query)
+        ret = cur.fetchall()
+        # for i in cur.fetchall():
+        #     ret+=i
+        # print(ret[0][0][0])
+        return ret[0][0][0] # json format
+
 def get_pg_config(params:dict):
     query = "show all;"
     with psycopg2.connect(**params) as conn:
