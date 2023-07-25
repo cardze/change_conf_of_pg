@@ -1,0 +1,12 @@
+[postgresql]
+host=
+database=
+user=
+password=
+
+
+[server]
+hostname=
+username=
+password=
+port=

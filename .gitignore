@@ -1,0 +1,8 @@
+output.txt
+util/__pycache__/config.cpython-39.pyc
+util/__pycache__/connection.cpython-39.pyc
+sql_test/sql_output/test.sql
+sql_test/sql_output/C-1.txt
+sql_test/sql_output/modified_C-1.txt
+sql_output/conf.csv
+config/database.ini
