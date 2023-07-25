@@ -1,0 +1,48 @@
+SELECT "TABLE_ITEMS"."item_id"
+FROM "dct_items" AS "TABLE_ITEMS"
+  JOIN "dct_lks_data" AS "ITEM_CLASSES"
+    ON "TABLE_ITEMS"."class_lks_id" = "ITEM_CLASSES"."lks_id"
+  JOIN "dct_lks_data" AS "ITEM_STATUS"
+    ON "TABLE_ITEMS"."status_lks_id" = "ITEM_STATUS"."lks_id"
+  LEFT OUTER JOIN (
+    SELECT *
+    FROM crosstab('select
+  "vew_dct_custom_field_values"."entity_id" "ItemID",
+  (''tiCustomField_'' || cast("dct_custom_fields"."custom_field_id" as varchar)) "CustomFieldName",
+  case
+    when char_length("vew_dct_custom_field_values"."value") > 0 then case
+      when "dct_custom_fields"."datatype_lks_id" = 1273 then cast(cast("vew_dct_custom_field_values"."value" as date) as varchar)
+      else "vew_dct_custom_field_values"."value"
+    end
+    else null
+  end "CustomFieldValue"
+from "vew_dct_custom_field_values"
+  join "dct_custom_fields"
+    on "vew_dct_custom_field_values"."custom_field_id" = "dct_custom_fields"."custom_field_id"
+where (
+  true
+  and "vew_dct_custom_field_values"."entity_type_lks_id" in (
+    select "dct_lks_data"."lks_id"
+    from "dct_lks_data"
+    where "dct_lks_data"."lkp_type_name" = ''CLASS''
+  )
+  and "dct_custom_fields"."custom_field_id" in (10)
+)
+order by 1', 'select (''tiCustomField_'' || cast("dct_custom_fields"."custom_field_id" as varchar))
+from "dct_custom_fields"
+where "dct_custom_fields"."custom_field_id" in (10)
+order by 1') AS "TABLE_CUSTOM_FIELDS" ("ItemID" BIGINT, "tiCustomField_10" TEXT)
+  ) AS "TABLE_CUSTOM_FIELDS"
+    ON "TABLE_ITEMS"."item_id" = "TABLE_CUSTOM_FIELDS"."ItemID"
+WHERE (
+  TRUE
+  AND "TABLE_CUSTOM_FIELDS"."tiCustomField_10" ILIKE '%55%'
+  AND "ITEM_CLASSES"."lkp_value_code" IN (
+    1100, 1200, 1300, 1400, 1500, 2100, 2200, 2300, 2400, 3000, 2500, 5000, 5100
+  )
+  AND "ITEM_STATUS"."lkp_value_code" <> 5091
+  AND "ITEM_STATUS"."lkp_value_code" <> 5089
+)
+ORDER BY
+  "TABLE_ITEMS"."item_name" ASC,
+  "TABLE_ITEMS"."item_id" ASC;
