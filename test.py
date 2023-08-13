@@ -15,10 +15,10 @@ def generate_conf_json():
     params = db_config(conf_path)
     filename = "conf"
     path = "./config/db_conf.json"
-    db_config = get_pg_config(params=params)
+    db_config_dict = get_pg_config(params=params)
     with open(path, 'w') as outputFile:
         outputFile.write("{\n")
-        for key, value in db_config.items():
+        for key, value in db_config_dict.items():
             outputFile.writelines("\t\""+str(key)+"\":[\""+str(value)+"\"],\n")
         outputFile.write("}\n")
 
@@ -112,7 +112,7 @@ def wait_for_cpu():
     with paramiko.SSHClient() as client:
         params = db_config(file_path="./config/database.ini", section='server')
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        client.connect(**params)
+        client.connect(**params, timeout=999)
         CPU_st = []
         while True:
             stdin , stdout, stderr = client.exec_command("sar -u 1 1 | awk '/^Average:/{print 100-$8}'", get_pty=True)
@@ -120,10 +120,12 @@ def wait_for_cpu():
             error = stderr.readlines()
             print("result : {0} \n error : {1}".format(result, error))
             CPU_st.append(float(result[0]))
-            if len(CPU_st) > 10:
+            if len(CPU_st) > 5:
                 CPU_st.pop(0)
-            if len(CPU_st) == 10 :
-                for i in range(10):
+            if len(CPU_st) == 5 :
+                print("rest for 5 sec...")
+                time.sleep(5)
+                for i in range(5):
                     if CPU_st.pop(0) > 5:
                         break
                     return
@@ -163,13 +165,16 @@ def run_test(cold:bool, iter_time=10):
                     clean_cache()
                     wait_for_cpu()
                 explain = send_query_explain(params, v) # dict
+                explain_json = json.dumps(explain)
+                print(type(explain_json))
                 print(k.split('.')[0], "exec : ",explain['Execution Time'],"ms plan : ", explain['Planning Time'], "ms")
-                total_time += int(explain['Execution Time'])+ int(explain['Planning Time'])
+                if i != 0:
+                    total_time += int(explain['Execution Time'])+ int(explain['Planning Time'])
                 if os.path.exists(small_report_path+"/plan") == False:
                     os.mkdir(small_report_path+"/plan")
                 with open(small_report_path+"/plan/"+str(k.split('.')[0])+"_"+str(i)+".json", "w") as plan_file:
-                    plan_file.writelines(str(explain))    
-            total_time/=iter_time
+                    plan_file.writelines(str(explain_json))    
+            total_time/=(iter_time-1)
             folder_name=str(k.split('.')[0])+"_"+str(int(total_time))
             if cold :
                 folder_name+="_Cold"
@@ -184,6 +189,6 @@ def run_test(cold:bool, iter_time=10):
 
 if __name__ == "__main__":
     iter_time = 5
-    run_test(False, iter_time) # warm
     run_test(True, iter_time)  # cold
-    
+    run_test(False, iter_time) # warm
+    # generate_conf_json()
