@@ -5,9 +5,10 @@ import json
 import itertools
 import paramiko
 import time
+import pandas as pd
 from util.config import db_config
 from util.connection import send_query, get_pg_config, send_query_explain
-
+from util.server import Server
 
 def generate_conf_json():
     query = "SHOW all;"
@@ -57,7 +58,7 @@ def write_file_on_server(file_name, content):
             result = stdout.readlines()
             error = stderr.readlines()
             print("result : {0} \n error : {1}".format(result[-3:-1], error))
-    restart_postgresql()
+    
         
             
 def restart_postgresql():
@@ -83,6 +84,7 @@ def restart_postgresql():
 
 def change_pg_conf(content):
     write_file_on_server("/var/lib/pgsql/data/postgresql.conf", content=content)
+    restart_postgresql()
     time.sleep(1)
 
 def get_sql_content(path):
@@ -120,24 +122,36 @@ def wait_for_cpu():
             error = stderr.readlines()
             print("result : {0} \n error : {1}".format(result, error))
             CPU_st.append(float(result[0]))
-            if len(CPU_st) > 5:
+            if len(CPU_st) > 3:
                 CPU_st.pop(0)
-            if len(CPU_st) == 5 :
-                print("rest for 5 sec...")
-                time.sleep(5)
-                for i in range(5):
+            if len(CPU_st) == 3 :
+                print("rest for 3 sec...")
+                time.sleep(3)
+                for i in range(3):
                     if CPU_st.pop(0) > 5:
                         break
                     return
                 
+def get_timestamp():
+    with paramiko.SSHClient() as client:
+        params = db_config(file_path="./config/database.ini", section='server')
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        client.connect(**params)
+        stdin , stdout, stderr = client.exec_command("date +%s", get_pty=True)
+        result = stdout.readlines()
+        error = stderr.readlines()
+        print("result : {0} \n error : {1}".format(result, error))
+        return int(result[0])
 
-def run_test(cold:bool, iter_time=10):
+
+def run_test(cold:bool, server:Server, iter_time=10):
     report_path = "./report/report_{}".format(time.strftime("%Y-%m-%d-%H%M%S"))
     if os.path.exists(report_path) == False:
         os.mkdir(report_path)
     query_path = "./raw_queries"
     query_dict = {}
     query_dict = get_sql_list(query_path)
+    print("The following test queries are loaded :", query_dict.keys())
     params = db_config("./config/database.ini")
     ori = ""
     content = ""
@@ -158,37 +172,71 @@ def run_test(cold:bool, iter_time=10):
             total_time =0
             tmp_folder_name = str(k.split('.')[0])+"tmp"
             small_report_path = report_path+"/"+tmp_folder_name
+            report_dct = {
+                "sql":[],
+                "exec_time":[],
+                "plan_time":[],
+                "total_time":[],
+                "timestamp":[]
+            }
             if os.path.exists(small_report_path) == False:
                 os.mkdir(small_report_path)
             for i in range(iter_time):
                 if cold == True : 
                     clean_cache()
                     wait_for_cpu()
+                # get the start time timestamp
+                report_dct["timestamp"].append(get_timestamp())
+                # start the ext4slower
+                server.start_record()
                 explain = send_query_explain(params, v) # dict
                 explain_json = json.dumps(explain)
-                print(type(explain_json))
-                print(k.split('.')[0], "exec : ",explain['Execution Time'],"ms plan : ", explain['Planning Time'], "ms")
+                print(k.split('.')[0], 
+                      "exec : ",
+                      explain['Execution Time'],"ms plan : ", 
+                      explain['Planning Time'], "ms")
+                report_dct["exec_time"].append(int(explain['Execution Time']))
+                report_dct["plan_time"].append(int(explain['Planning Time']))
+                report_dct["total_time"].append(int(explain['Execution Time'])+ int(explain['Planning Time']))
+                report_dct["sql"].append(str(str(k.split('.')[0])+"_"+str(i)))
                 if i != 0:
                     total_time += int(explain['Execution Time'])+ int(explain['Planning Time'])
                 if os.path.exists(small_report_path+"/plan") == False:
                     os.mkdir(small_report_path+"/plan")
                 with open(small_report_path+"/plan/"+str(k.split('.')[0])+"_"+str(i)+".json", "w") as plan_file:
-                    plan_file.writelines(str(explain_json))    
+                    plan_file.writelines(str(explain_json))
+                # open the folder and store the bcc report (ext4slower)
+                if os.path.exists(small_report_path+"/bcc") == False:
+                    os.mkdir(small_report_path+"/bcc")
+                server.stop_record(small_report_path+"/bcc/"+str(k.split('.')[0])+"_"+str(i)+".csv")    
             total_time/=(iter_time-1)
             folder_name=str(k.split('.')[0])+"_"+str(int(total_time))
             if cold :
                 folder_name+="_Cold"
             else:
                 folder_name+="_Warm"
+            # make sure the name of folder is valid
+            folder_dup = 0
+            ori_folder_name = folder_name
+            while os.path.exists(report_path+"/"+folder_name) == True:
+                folder_dup+=1
+                folder_name = "{0}_{1}".format(ori_folder_name, folder_dup)
             os.rename(report_path+"/"+tmp_folder_name, report_path+"/"+folder_name)
             small_report_path = report_path+"/"+folder_name
             if os.path.exists(small_report_path) == False:
                 os.mkdir(small_report_path)
             with open(small_report_path+"/conf.conf", "w") as conf_file:
                 conf_file.writelines(conf_alter)
+            # store the report
+            df = pd.DataFrame(report_dct)
+            df.to_csv(small_report_path+"/report.csv")
 
 if __name__ == "__main__":
-    iter_time = 5
-    run_test(True, iter_time)  # cold
-    run_test(False, iter_time) # warm
-    # generate_conf_json()
+    s = Server('./config/database.ini')
+    s.connect()
+    if s.is_connect == False:
+        print("ssh connection failed...")
+    iter_time = 3
+    run_test(False, s, iter_time) # warm
+    # run_test(True, s, iter_time)  # cold
+    s.disconnect()

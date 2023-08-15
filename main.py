@@ -5,9 +5,10 @@ import json
 import itertools
 import paramiko
 import time
+import pandas as pd
 from util.config import db_config
 from util.connection import send_query, get_pg_config, send_query_explain
-
+from util.server import Server
 
 def generate_conf_json():
     query = "SHOW all;"
@@ -57,7 +58,7 @@ def write_file_on_server(file_name, content):
             result = stdout.readlines()
             error = stderr.readlines()
             print("result : {0} \n error : {1}".format(result[-3:-1], error))
-    restart_postgresql()
+    
         
             
 def restart_postgresql():
@@ -83,6 +84,7 @@ def restart_postgresql():
 
 def change_pg_conf(content):
     write_file_on_server("/var/lib/pgsql/data/postgresql.conf", content=content)
+    restart_postgresql()
     time.sleep(1)
 
 def get_sql_content(path):
@@ -130,6 +132,27 @@ def wait_for_cpu():
                         break
                     return
                 
+def get_timestamp():
+    with paramiko.SSHClient() as client:
+        params = db_config(file_path="./config/database.ini", section='server')
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        client.connect(**params)
+        stdin , stdout, stderr = client.exec_command("date +%s", get_pty=True)
+        result = stdout.readlines()
+        error = stderr.readlines()
+        print("result : {0} \n error : {1}".format(result, error))
+        return int(result[0])
+
+# record the filesystem operation by bcc tools
+def start_recording(server:Server):
+    print("Start recording by using BCC tools... ")
+    print("The record will be store in ~/logs/ folder")
+    return server.send_cmd("ext4slower -j > logs/ext4slower.log &")
+
+def stop_recording(server:Server, pid:int, log_path:str):
+    # kill the record process
+    stdin, stdout, stderr = server.send_cmd("kill {}".format(pid))
+
 
 def run_test(cold:bool, iter_time=10):
     report_path = "./report/report_{}".format(time.strftime("%Y-%m-%d-%H%M%S"))
@@ -138,7 +161,7 @@ def run_test(cold:bool, iter_time=10):
     query_path = "./raw_queries"
     query_dict = {}
     query_dict = get_sql_list(query_path)
-    print(query_dict.keys())
+    print("The following test queries are loaded :", query_dict.keys())
     params = db_config("./config/database.ini")
     ori = ""
     content = ""
@@ -159,16 +182,31 @@ def run_test(cold:bool, iter_time=10):
             total_time =0
             tmp_folder_name = str(k.split('.')[0])+"tmp"
             small_report_path = report_path+"/"+tmp_folder_name
+            report_dct = {
+                "sql":[],
+                "exec_time":[],
+                "plan_time":[],
+                "total_time":[],
+                "timestamp":[]
+            }
             if os.path.exists(small_report_path) == False:
                 os.mkdir(small_report_path)
             for i in range(iter_time):
                 if cold == True : 
                     clean_cache()
                     wait_for_cpu()
+                # get the start time timestamp
+                report_dct["timestamp"].append(get_timestamp())
                 explain = send_query_explain(params, v) # dict
                 explain_json = json.dumps(explain)
-                print(type(explain_json))
-                print(k.split('.')[0], "exec : ",explain['Execution Time'],"ms plan : ", explain['Planning Time'], "ms")
+                print(k.split('.')[0], 
+                      "exec : ",
+                      explain['Execution Time'],"ms plan : ", 
+                      explain['Planning Time'], "ms")
+                report_dct["exec_time"].append(int(explain['Execution Time']))
+                report_dct["plan_time"].append(int(explain['Planning Time']))
+                report_dct["total_time"].append(int(explain['Execution Time'])+ int(explain['Planning Time']))
+                report_dct["sql"].append(str(str(k.split('.')[0])+"_"+str(i)))
                 if i != 0:
                     total_time += int(explain['Execution Time'])+ int(explain['Planning Time'])
                 if os.path.exists(small_report_path+"/plan") == False:
@@ -181,17 +219,24 @@ def run_test(cold:bool, iter_time=10):
                 folder_name+="_Cold"
             else:
                 folder_name+="_Warm"
-            # ensure that the folder won't be renamed to the former iteration
-            time.sleep(1)
+            # make sure the name of folder is valid
+            folder_dup = 0
+            ori_folder_name = folder_name
+            while os.path.exists(report_path+"/"+folder_name) == True:
+                folder_dup+=1
+                folder_name = "{0}_{1}".format(ori_folder_name, folder_dup)
             os.rename(report_path+"/"+tmp_folder_name, report_path+"/"+folder_name)
             small_report_path = report_path+"/"+folder_name
             if os.path.exists(small_report_path) == False:
                 os.mkdir(small_report_path)
             with open(small_report_path+"/conf.conf", "w") as conf_file:
                 conf_file.writelines(conf_alter)
+            # store the report
+            df = pd.DataFrame(report_dct)
+            df.to_csv(small_report_path+"/report.csv")
 
 if __name__ == "__main__":
     iter_time = 3
     run_test(False, iter_time) # warm
-    run_test(True, iter_time)  # cold
+    # run_test(True, iter_time)  # cold
     # generate_conf_json()

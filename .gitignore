@@ -7,3 +7,5 @@ sql_test/sql_output/modified_C-1.txt
 sql_output/conf.csv
 config/database.ini
 report/*
+util/__pycache__/*
+tmp.csv
