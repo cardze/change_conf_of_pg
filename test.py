@@ -7,7 +7,7 @@ import paramiko
 import time
 import pandas as pd
 from util.config import db_config
-from util.connection import send_query, get_pg_config, send_query_explain
+from util.connection import send_query, get_pg_config, send_query_explain, Connection
 from util.server import Server
 
 def generate_conf_json():
@@ -185,11 +185,16 @@ def run_test(cold:bool, server:Server, iter_time=10):
                 if cold == True : 
                     clean_cache()
                     wait_for_cpu()
+                conn = Connection(params=params, query=v)
                 # get the start time timestamp
                 report_dct["timestamp"].append(get_timestamp())
                 # start the ext4slower
-                server.start_record()
-                explain = send_query_explain(params, v) # dict
+                # pid = conn.get_pid()
+                # server.start_record_pid(pid)
+                # server.start_record()
+                # time.sleep(1)
+                # explain = send_query_explain(params, v) # dict
+                explain = conn.get_explain_of_query() # dict
                 explain_json = json.dumps(explain)
                 print(k.split('.')[0], 
                       "exec : ",
@@ -206,9 +211,9 @@ def run_test(cold:bool, server:Server, iter_time=10):
                 with open(small_report_path+"/plan/"+str(k.split('.')[0])+"_"+str(i)+".json", "w") as plan_file:
                     plan_file.writelines(str(explain_json))
                 # open the folder and store the bcc report (ext4slower)
-                if os.path.exists(small_report_path+"/bcc") == False:
-                    os.mkdir(small_report_path+"/bcc")
-                server.stop_record(small_report_path+"/bcc/"+str(k.split('.')[0])+"_"+str(i)+".csv")    
+                # if os.path.exists(small_report_path+"/bcc") == False:
+                #     os.mkdir(small_report_path+"/bcc")
+                # server.stop_record(small_report_path+"/bcc/"+str(k.split('.')[0])+"_"+str(i)+".csv")
             total_time/=(iter_time-1)
             folder_name=str(k.split('.')[0])+"_"+str(int(total_time))
             if cold :
@@ -236,7 +241,7 @@ if __name__ == "__main__":
     s.connect()
     if s.is_connect == False:
         print("ssh connection failed...")
-    iter_time = 3
+    iter_time = 5
     run_test(False, s, iter_time) # warm
-    # run_test(True, s, iter_time)  # cold
+    run_test(True, s, iter_time)  # cold
     s.disconnect()

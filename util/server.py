@@ -59,6 +59,16 @@ class Server:
             return "LOCAL : connection error"
         self.send_cmd(cmd=cmd, verbose=True)
 
+    def start_record_pid(self, pid:str):
+        print("Start recording by using BCC tools... ")
+        print("The record will be store in ~/logs/ folder")
+        cmd = "./start_bcc_recording.sh {} &".format(pid)
+        if self.is_connect == False:
+            print("LOCAL : Please do the connection first and don't forget to close it.")
+            return "LOCAL : connection error"
+        self.send_cmd(cmd=cmd, verbose=True)
+
+
     def stop_record(self, store_path:str):
         print("stoping the bcc recording process")
         cmd = "./stop_bcc_recording.sh"
