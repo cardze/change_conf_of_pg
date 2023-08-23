@@ -53,7 +53,7 @@ class Server:
     def start_record(self):
         print("Start recording by using BCC tools... ")
         print("The record will be store in ~/logs/ folder")
-        cmd = "./start_bcc_recording.sh &"
+        cmd = "nohup ./start_bcc_recording.sh"
         if self.is_connect == False:
             print("LOCAL : Please do the connection first and don't forget to close it.")
             return "LOCAL : connection error"
