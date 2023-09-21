@@ -1,0 +1,4 @@
+select r."LocationCode", i."ItemName", i."Customer", a."Class", a."Action", a."Field",  i."ElectronicAssetTag", a."ChangedFrom", a."ChangedTo", a."ChangedBy", a."ChangedDate" from odbc."dcAuditTrail" a
+join odbc."dcRooms" r on a."RoomID" = r."ID"
+join odbc."dcAllItems" i on a."ItemID" = i."ItemID"
+Order By "ChangedDate" Desc;

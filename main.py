@@ -33,8 +33,8 @@ def dict_product(dicts):
     """
     return (dict(zip(dicts, x)) for x in itertools.product(*dicts.values()))
 
-def generate_all_possible_config():
-    with open("./config/db_conf.json" , "r") as file:
+def generate_all_possible_config(from_path="./config/db_conf.json"):
+    with open(from_path , "r") as file:
         my_conf = json.load(file)   
         all_set = dict_product(dict(my_conf)) 
         # for set in all_set:
@@ -144,7 +144,7 @@ def get_timestamp():
         return int(result[0])
 
 
-def run_test(cold:bool, server:Server, iter_time=10):
+def run_test(cold:bool, server:Server, iter_time=10, combination_path="./config/db_conf.json"):
     report_path = "./report/report_{}".format(time.strftime("%Y-%m-%d-%H%M%S"))
     if os.path.exists(report_path) == False:
         os.mkdir(report_path)
@@ -158,7 +158,7 @@ def run_test(cold:bool, server:Server, iter_time=10):
     with open("./config/default.conf", "r") as s:
         for i in s.readlines():
             ori+=i
-    for set in generate_all_possible_config():
+    for set in generate_all_possible_config(combination_path):
         content = ori
         conf_alter = ""
         for k, v in set.items():
@@ -241,7 +241,9 @@ if __name__ == "__main__":
     s.connect()
     if s.is_connect == False:
         print("ssh connection failed...")
-    iter_time = 5
-    run_test(False, s, iter_time) # warm
-    run_test(True, s, iter_time)  # cold
+    iter_time = 3
+    run_test(False, s, iter_time, "./config/db_conf_sunbird.json") # warm
+    run_test(False, s, iter_time, "./config/db_conf_v5.json") # warm
+    run_test(True, s, iter_time, "./config/db_conf_sunbird.json")  # cold
+    run_test(True, s, iter_time, "./config/db_conf_v5.json")  # cold
     s.disconnect()
