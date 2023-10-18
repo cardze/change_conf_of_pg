@@ -122,12 +122,12 @@ def wait_for_cpu():
             error = stderr.readlines()
             print("result : {0} \n error : {1}".format(result, error))
             CPU_st.append(float(result[0]))
-            if len(CPU_st) > 3:
+            if len(CPU_st) > 10:
                 CPU_st.pop(0)
-            if len(CPU_st) == 3 :
+            if len(CPU_st) == 10 :
                 print("rest for 3 sec...")
                 time.sleep(3)
-                for i in range(3):
+                for i in range(10):
                     if CPU_st.pop(0) > 5:
                         break
                     return
@@ -144,7 +144,7 @@ def get_timestamp():
         return int(result[0])
 
 
-def run_test(cold:bool, server:Server, iter_time=10, combination_path="./config/db_conf.json"):
+def run_test(cold:bool, server:Server, iter_time=10, combination_path="./config/db_conf.json", slower=False):
     report_path = "./report/report_{}".format(time.strftime("%Y-%m-%d-%H%M%S"))
     if os.path.exists(report_path) == False:
         os.mkdir(report_path)
@@ -165,6 +165,7 @@ def run_test(cold:bool, server:Server, iter_time=10, combination_path="./config/
             conf_alter+="{0}='{1}'\n".format(k, v)
         content+=conf_alter
         change_pg_conf(content)
+        wait_for_cpu()
         # start sending query
         # need to store explain and conf
         explain = ""
@@ -191,7 +192,8 @@ def run_test(cold:bool, server:Server, iter_time=10, combination_path="./config/
                 # start the ext4slower
                 # pid = conn.get_pid()
                 # server.start_record_pid(pid)
-                server.start_record()
+                if slower : 
+                    server.start_record()
                 time.sleep(1)
                 # explain = send_query_explain(params, v) # dict
                 explain = conn.get_explain_of_query() # dict
@@ -211,9 +213,10 @@ def run_test(cold:bool, server:Server, iter_time=10, combination_path="./config/
                 with open(small_report_path+"/plan/"+str(k.split('.')[0])+"_"+str(i)+".json", "w") as plan_file:
                     plan_file.writelines(str(explain_json))
                 # open the folder and store the bcc report (ext4slower)
-                if os.path.exists(small_report_path+"/bcc") == False:
+                if os.path.exists(small_report_path+"/bcc") == False and slower:
                     os.mkdir(small_report_path+"/bcc")
-                server.stop_record(small_report_path+"/bcc/"+str(k.split('.')[0])+"_"+str(i)+".csv")
+                if slower :
+                    server.stop_record(small_report_path+"/bcc/"+str(k.split('.')[0])+"_"+str(i)+".csv")
             total_time/=(iter_time-1)
             folder_name=str(k.split('.')[0])+"_"+str(int(total_time))
             if cold :
@@ -241,7 +244,7 @@ if __name__ == "__main__":
     s.connect()
     if s.is_connect == False:
         print("ssh connection failed...")
-    iter_time = 3
+    iter_time = 10
     run_test(False, s, iter_time, "./config/db_conf_sunbird.json") # warm
     run_test(False, s, iter_time, "./config/db_conf_v5.json") # warm
     run_test(True, s, iter_time, "./config/db_conf_sunbird.json")  # cold

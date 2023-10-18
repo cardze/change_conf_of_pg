@@ -1,0 +1,7 @@
+select count("items"."item_id") 
+from "dct_items" "items" 
+left outer join "dct_lks_data" "classLks" on "items"."class_lks_id" = "classLks"."lks_id" 
+left outer join "dct_lks_data" "subclassLks" on "items"."subclass_lks_id" = "subclassLks"."lks_id" 
+left outer join "dct_locations" "locations" on "items"."location_id" = "locations"."location_id" 
+left outer join "dct_ports_power" "powerPorts" on "items"."item_id" = "powerPorts"."item_id"
+where ("classLks"."lkp_value_code" in (2400, 2500, 5000, 5100, 2700, 2600) or ((("classLks"."lkp_value_code" = 2600 and "subclassLks"."lkp_value_code" = 2602) or "classLks"."lkp_value_code" = 2300) and "powerPorts"."is_used" = true));
