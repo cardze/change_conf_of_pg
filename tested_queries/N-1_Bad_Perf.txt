@@ -1,0 +1,64 @@
+SELECT dct_items_cabinet.item_id AS same_pos_item_id,
+       dct_items.position_in_row,
+       dct_sub_locations.sub_location_name as row_label,
+       dct_parent_sub_location.sub_location_name as aisle_label,
+       CASE
+           WHEN dct_models.mounting = 'Suspended' THEN dct_items.item_name || '_Suspended'
+           ELSE dct_items.item_name
+       END AS item_name,
+       dct_items.item_alias,
+       dct_items.model_id,
+       grp.lku_value AS group_name,
+       dct_models.model_name,
+       dct_models.ru_height as ru_height,
+       CASE
+           WHEN user_prefs.units = 1 THEN dct_models.weight || ' lbs'
+           ELSE round(dct_models.weight * 0.4536, 2) || ' kgs'
+       END as weight,
+       CASE
+           WHEN user_prefs.units = 1 THEN dct_models.dim_h
+           ELSE round(dct_models.dim_h * 25.4,2)
+       END as dim_h,
+       CASE
+           WHEN user_prefs.units = 1 THEN dct_models.dim_w
+           ELSE round(dct_models.dim_w * 25.4,2)
+       END as dim_w,
+       CASE
+           WHEN user_prefs.units = 1 THEN dct_models.dim_d || ' in'
+           ELSE round(dct_models.dim_d * 25.4,2) || ' mm'
+       END as dim_d,
+       dct_mfrs.mfr_name,
+       facing.lkp_value AS facing,
+       function.lku_value AS function,
+       purpose.lku_value AS purpose,
+       dct_item_details.asset_number,
+       dct_item_details.serial_number,
+       status_lks_data.lkp_value as status,
+       dct_items.location_reference,
+       dct_locations.code As location_code,
+       CASE
+           WHEN user_prefs.units = 1 THEN dct_items_cabinet.loading_capacity || ' lbs'
+           ELSE round(dct_items_cabinet.loading_capacity * 0.4536, 2) || ' kgs'
+       END AS loading_capacity,
+       dct_items_cabinet.power_capacity || ' kW' as power_capacity
+FROM user_prefs,
+     dct_items_cabinet
+INNER JOIN dct_items ON dct_items_cabinet.item_id = dct_items.item_id
+LEFT JOIN dct_sub_locations ON dct_items.sub_location_id = dct_sub_locations.sub_location_id
+LEFT JOIN dct_sub_locations dct_parent_sub_location ON dct_sub_locations.parent_sub_location_id = dct_parent_sub_location.sub_location_id
+LEFT JOIN dct_lks_data AS facing ON dct_items.facing_lks_id = facing.lks_id
+LEFT JOIN dct_lku_data AS grp ON grp.lku_id = dct_items_cabinet.cabinet_grp_lku_id
+LEFT JOIN dct_item_details ON dct_items.item_detail_id = dct_item_details.item_detail_id
+LEFT JOIN dct_lku_data AS function ON dct_item_details.function_lku_id = function.lku_id
+LEFT JOIN dct_lku_data AS purpose ON dct_item_details.purpose_lku_id = purpose.lku_id
+LEFT JOIN dct_models ON dct_items.model_id = dct_models.model_id
+LEFT JOIN dct_mfrs ON dct_models.mfr_id = dct_mfrs.mfr_id
+LEFT JOIN dct_locations ON dct_items.location_id = dct_locations.location_id
+LEFT JOIN dct_lks_data status_lks_data ON dct_items.status_lks_id = status_lks_data.lks_id
+INNER JOIN dct_items AS cab ON ( (cab.location_id = dct_items.location_id
+                                  AND cab.sub_location_id = dct_items.sub_location_id
+                                  AND cab.position_in_row = dct_items.position_in_row)
+                                OR (dct_items.sub_location_id IS NULL
+                                    AND cab.sub_location_id IS NULL
+                                    AND cab.item_id = dct_items.item_id))
+AND cab.item_id=22159;
