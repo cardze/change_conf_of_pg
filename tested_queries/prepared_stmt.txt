@@ -1,0 +1,168 @@
+PREPARE test_plan (int) AS
+  SELECT
+    item0_."item_id" AS col_0_0_,
+    item0_."item_name" AS col_1_0_,
+    itemservic1_."serial_number" AS col_2_0_,
+    itemservic1_."asset_number" AS col_3_0_,
+    item0_."item_alias" AS col_4_0_,
+    lkudata2_."lku_id" AS col_5_0_,
+    lkudata2_."lku_value" AS col_6_0_,
+    user4_."id" AS col_7_0_,
+    user4_."login" AS col_8_0_,
+    usergroup6_."id" AS col_9_0_,
+    usergroup6_."name" AS col_10_0_,
+    lkudata8_."lku_id" AS col_11_0_,
+    lkudata8_."lku_value" AS col_12_0_,
+    lkudata10_."lku_id" AS col_13_0_,
+    lkudata10_."lku_value" AS col_14_0_,
+    lkudata12_."lku_id" AS col_15_0_,
+    lkudata12_."lku_value" AS col_16_0_,
+    item0_."valid" AS col_17_0_,
+    item0_."reconciled" AS col_18_0_,
+    modelmfrde15_."mfr_id" AS col_19_0_,
+    modelmfrde15_."mfr_name" AS col_20_0_,
+    modelmfrde15_."tel_cust_service" AS col_21_0_,
+    modelmfrde15_."tel_tech_support" AS col_22_0_,
+    modelmfrde15_."acct_number" AS col_23_0_,
+    modeldetai13_."model_id" AS col_24_0_,
+    modeldetai13_."model_name" AS col_25_0_,
+    modeldetai13_."weight" AS col_26_0_,
+    modeldetai13_."ru_height" AS col_27_0_,
+    modeldetai13_."ru_height" AS col_28_0_,
+    modeldetai13_."form_factor" AS col_29_0_,
+    lksdata16_."lkp_value_code" AS col_30_0_,
+    lksdata16_."lkp_value" AS col_31_0_,
+    datacenter17_."location_id" AS col_32_0_,
+    datacenter17_."code" AS col_33_0_,
+    sublocatio20_."sub_location_id" AS col_34_0_,
+    sublocatio20_."sub_location_name" AS col_35_0_,
+    sublocatio18_."sub_location_id" AS col_36_0_,
+    sublocatio18_."sub_location_name" AS col_37_0_,
+    item0_."position_in_row" AS col_38_0_,
+    lksdata21_."lkp_value_code" AS col_39_0_,
+    lksdata21_."lkp_value" AS col_40_0_,
+    item0_."location_reference" AS col_41_0_,
+    lksdata22_."lkp_value_code" AS col_42_0_,
+    lksdata22_."lkp_value" AS col_43_0_,
+    lksdata21_."lkp_value_code" AS col_44_0_,
+    lksdata21_."lkp_value" AS col_45_0_,
+    lksdata22_."lkp_value_code" AS col_46_0_,
+    lksdata22_."lkp_value" AS col_47_0_,
+    item0_."u_position" AS col_48_0_,
+    lksdata21_."lkp_value_code" AS col_49_0_,
+    lksdata21_."lkp_value" AS col_50_0_,
+    lksdata21_."lkp_value_code" AS col_51_0_,
+    lksdata21_."lkp_value" AS col_52_0_,
+    item0_."shelf_position" AS col_53_0_,
+    item0_."elevation_aff" AS col_54_0_,
+    datacenter17_."dc_name" AS col_55_0_,
+    itemservic1_."po_number" AS col_56_0_,
+    project24_."project_id" AS col_57_0_,
+    project24_."project_number" AS col_58_0_,
+    project24_."project_id" AS col_59_0_,
+    project24_."project_name" AS col_60_0_,
+    itemservic1_."purchase_price" AS col_61_0_,
+    lkudata26_."lku_id" AS col_62_0_,
+    lkudata26_."lku_value" AS col_63_0_,
+    itemservic1_."contract_number" AS col_64_0_,
+    itemservic1_."contract_amount" AS col_65_0_,
+    itemservic1_."description" AS col_66_0_,
+    itemservic1_."sys_created_by" AS col_67_0_,
+    lksdata29_."lkp_value_code" AS col_68_0_,
+    lksdata29_."lkp_value" AS col_69_0_,
+    item30_."item_id" AS col_70_0_,
+    item30_."item_name" AS col_71_0_,
+    lksdata16_."lkp_value_code" AS col_72_0_,
+    lksdata16_."lkp_value" AS col_73_0_,
+    item0_."ps_redundancy" AS col_74_0_,
+    item0_."proxy_index" AS col_75_0_,
+    item0_."ps_redundancy" AS col_76_0_,
+    item0_."effective_power" AS col_77_0_,
+    item0_."potential_power" AS col_78_0_,
+    itemsnmp31_."px_username" AS col_79_0_,
+    itemsnmp31_."px_password" AS col_80_0_,
+    itemsnmp31_."snmp3_enabled" AS col_81_0_,
+    itemsnmp31_."snmp3_user" AS col_82_0_,
+    itemsnmp31_."snmp3_auth_level" AS col_83_0_,
+    itemsnmp31_."snmp3_auth_protocol" AS col_84_0_,
+    itemsnmp31_."snmp3_auth_passkey" AS col_85_0_,
+    itemsnmp31_."snmp3_priv_protocol" AS col_86_0_,
+    itemsnmp31_."snmp3_priv_passkey" AS col_87_0_,
+    itemsnmp31_."snmp_community_string" AS col_88_0_,
+    lksdata33_."lkp_value_code" AS col_89_0_,
+    lksdata33_."lkp_value" AS col_90_0_,
+    lksdata33_."lkp_value_code" AS col_91_0_,
+    lksdata33_."lkp_value" AS col_92_0_,
+    item0_."piq_id" AS col_93_0_
+  FROM "dct_items" item0_
+  LEFT OUTER JOIN "dct_item_details" itemservic1_
+    ON item0_."item_detail_id" = itemservic1_."item_detail_id"
+  LEFT OUTER JOIN "dct_lku_data" lkudata2_
+    ON item0_."substatus_lku_id" = lkudata2_."lku_id"
+  LEFT OUTER JOIN "dct_item_details" itemservic3_
+    ON item0_."item_detail_id" = itemservic3_."item_detail_id"
+  LEFT OUTER JOIN "users" user4_
+    ON itemservic3_."item_admin_user_id" = user4_."id"
+  LEFT OUTER JOIN "dct_item_details" itemservic5_
+    ON item0_."item_detail_id" = itemservic5_."item_detail_id"
+  LEFT OUTER JOIN "user_groups" usergroup6_
+    ON itemservic5_."item_admin_user_grp_id" = usergroup6_."id"
+  LEFT OUTER JOIN "dct_item_details" itemservic7_
+    ON item0_."item_detail_id" = itemservic7_."item_detail_id"
+  LEFT OUTER JOIN "dct_lku_data" lkudata8_
+    ON itemservic7_."purpose_lku_id" = lkudata8_."lku_id"
+  LEFT OUTER JOIN "dct_item_details" itemservic9_
+    ON item0_."item_detail_id" = itemservic9_."item_detail_id"
+  LEFT OUTER JOIN "dct_lku_data" lkudata10_
+    ON itemservic9_."function_lku_id" = lkudata10_."lku_id"
+  LEFT OUTER JOIN "dct_item_details" itemservic11_
+    ON item0_."item_detail_id" = itemservic11_."item_detail_id"
+  LEFT OUTER JOIN "dct_lku_data" lkudata12_
+    ON itemservic11_."department_lku_id" = lkudata12_."lku_id"
+  LEFT OUTER JOIN "dct_models" modeldetai13_
+    ON item0_."model_id" = modeldetai13_."model_id"
+  LEFT OUTER JOIN "dct_models" modeldetai14_
+    ON item0_."model_id" = modeldetai14_."model_id"
+  LEFT OUTER JOIN "dct_mfrs" modelmfrde15_
+    ON modeldetai14_."mfr_id" = modelmfrde15_."mfr_id"
+  LEFT OUTER JOIN "dct_lks_data" lksdata16_
+    ON item0_."subclass_lks_id" = lksdata16_."lks_id"
+  LEFT OUTER JOIN "dct_locations" datacenter17_
+    ON item0_."location_id" = datacenter17_."location_id"
+  LEFT OUTER JOIN "dct_sub_locations" sublocatio18_
+    ON item0_."sub_location_id" = sublocatio18_."sub_location_id"
+  LEFT OUTER JOIN "dct_sub_locations" sublocatio19_
+    ON item0_."sub_location_id" = sublocatio19_."sub_location_id"
+  LEFT OUTER JOIN "dct_sub_locations" sublocatio20_
+    ON sublocatio19_."parent_sub_location_id" = sublocatio20_."sub_location_id"
+  LEFT OUTER JOIN "dct_lks_data" lksdata21_
+    ON item0_."facing_lks_id" = lksdata21_."lks_id"
+  LEFT OUTER JOIN "dct_lks_data" lksdata22_
+    ON item0_."mounted_rails_pos_lks_id" = lksdata22_."lks_id"
+  LEFT OUTER JOIN "dct_item_details" itemservic23_
+    ON item0_."item_detail_id" = itemservic23_."item_detail_id"
+  LEFT OUTER JOIN "dct_projects" project24_
+    ON itemservic23_."project_id" = project24_."project_id"
+  LEFT OUTER JOIN "dct_item_details" itemservic25_
+    ON item0_."item_detail_id" = itemservic25_."item_detail_id"
+  LEFT OUTER JOIN "dct_lku_data" lkudata26_
+    ON itemservic25_."sla_profile_lku_id" = lkudata26_."lku_id"
+  LEFT OUTER JOIN "vew_virtualization_entities" virtualiza27_
+    ON item0_."item_id" = virtualiza27_."item_id"
+  LEFT OUTER JOIN "vew_virtualization_entities" virtualiza28_
+    ON item0_."item_id" = virtualiza28_."item_id"
+  LEFT OUTER JOIN "dct_lks_data" lksdata29_
+    ON virtualiza28_."status_lks_id" = lksdata29_."lks_id"
+  LEFT OUTER JOIN "dct_items" item30_
+    ON item0_."sibling_item_id" = item30_."item_id"
+  LEFT OUTER JOIN "dct_items_snmp" itemsnmp31_
+    ON item0_."item_id" = itemsnmp31_."item_id"
+  LEFT OUTER JOIN "dct_item_details" itemservic32_
+    ON item0_."item_detail_id" = itemservic32_."item_detail_id"
+  LEFT OUTER JOIN "dct_lks_data" lksdata33_
+    ON itemservic32_."origin_lks_id" = lksdata33_."lks_id"
+  WHERE item0_."item_id" = $1;
+
+EXECUTE test_plan(3080);
+
+-- ? = 3080

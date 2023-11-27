@@ -71,3 +71,21 @@ def get_pg_config(params:dict):
         ret_query = cur.fetchall()
         new_ret = [[x[0],x[1]] for x in ret_query]
         return dict(new_ret)
+
+# developing
+def send_query_explain_with_prepared_stmt(params:dict, query:str):
+    pre_stmt = query.split("EXECUTE")[0]
+    exe_query = query.split("EXECUTE")[1]
+
+    explain_query = "EXPLAIN (ANALYZE, COSTS, VERBOSE, BUFFERS, FORMAT JSON)\n EXECUTE "+exe_query
+
+    with psycopg2.connect(**params) as conn:
+        # create a cursor
+        cur = conn.cursor()
+        # execute a statement
+        cur.execute(pre_stmt+explain_query)
+        ret = cur.fetchall()
+        # for i in cur.fetchall():
+        #     ret+=i
+        # print(ret[0][0][0])
+        return ret[0][0][0] # json format
