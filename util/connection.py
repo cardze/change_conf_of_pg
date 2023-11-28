@@ -3,6 +3,7 @@ from util.config import db_config
 import os
 import csv
 
+            # centos() / postgresql (here!)
 
 class Connection:
     def __init__(self, params:dict, query:str) -> None:
@@ -10,6 +11,7 @@ class Connection:
         self.query = query
         self.connect.autocommit = True
         self.planning = None
+        self.prepared = "PREPARE" in self.query
 
     def get_pid(self):
         with self.connect.cursor() as cur:
@@ -20,8 +22,15 @@ class Connection:
 
     def get_explain_of_query(self):
         explain_prefix = "EXPLAIN (ANALYZE, COSTS, VERBOSE, BUFFERS, FORMAT JSON)\n"
+        ready_qeury = explain_prefix+self.query
+
+        if self.prepared :
+            pre_stmt = self.query.split("EXECUTE")[0] + "\n"
+            exe_query = "EXECUTE "+self.query.split("EXECUTE")[1]
+            ready_qeury = pre_stmt+explain_prefix+exe_query
+
         with self.connect.cursor() as cur:
-            cur.execute(explain_prefix+self.query)
+            cur.execute(ready_qeury)
             ret = cur.fetchall()
             self.planning = ret[0][0][0]
             return ret[0][0][0]

@@ -81,6 +81,9 @@ class Server:
             sftp.get("logs/ext4slower.log", store_path)
 
 
+            # centos(here!) / postgresql
+
+
 
 
         

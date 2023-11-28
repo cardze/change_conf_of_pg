@@ -244,7 +244,7 @@ if __name__ == "__main__":
     s.connect()
     if s.is_connect == False:
         print("ssh connection failed...")
-    iter_time = 2
+    iter_time = 50
     sunbird_conf_path = "./config/db_conf_sunbird.json"
     v5_conf_path = "./config/db_conf_v5.json"
     run_test(False, s, iter_time, sunbird_conf_path) # warm
