@@ -22,15 +22,17 @@ class Connection:
 
     def get_explain_of_query(self):
         explain_prefix = "EXPLAIN (ANALYZE, COSTS, VERBOSE, BUFFERS, FORMAT JSON)\n"
-        ready_qeury = explain_prefix+self.query
-
-        if self.prepared :
-            pre_stmt = self.query.split("EXECUTE")[0] + "\n"
-            exe_query = "EXECUTE "+self.query.split("EXECUTE")[1]
-            ready_qeury = pre_stmt+explain_prefix+exe_query
-
+        ready_query = explain_prefix+self.query
         with self.connect.cursor() as cur:
-            cur.execute(ready_qeury)
+            if self.prepared :
+                pre_stmt = self.query.split("EXECUTE")[0] + "\n"
+                cur.execute(pre_stmt)
+                exe_query = "EXECUTE "+self.query.split("EXECUTE")[1]
+                ready_query = explain_prefix+exe_query
+                # actually call five time
+                # for i in range(5):
+                #     cur.execute(exe_query)
+            cur.execute(ready_query)
             ret = cur.fetchall()
             self.planning = ret[0][0][0]
             return ret[0][0][0]

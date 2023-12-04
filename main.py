@@ -122,6 +122,11 @@ def wait_for_cpu():
             error = stderr.readlines()
             print("result : {0} \n error : {1}".format(result, error))
             CPU_st.append(float(result[0]))
+            
+            if float(result[0]) > 5:
+                print("rest for 3 sec...")
+                time.sleep(3)
+
             if len(CPU_st) > 10:
                 CPU_st.pop(0)
             if len(CPU_st) == 10 :
@@ -244,9 +249,9 @@ if __name__ == "__main__":
     s.connect()
     if s.is_connect == False:
         print("ssh connection failed...")
-    iter_time = 50
-    sunbird_conf_path = "./config/db_conf_sunbird.json"
-    v5_conf_path = "./config/db_conf_v5.json"
+    iter_time = 11
+    sunbird_conf_path = "./config/db_conf_sunbird_S1.json"
+    v5_conf_path = "./config/db_conf_v5_S1.json"
     run_test(False, s, iter_time, sunbird_conf_path) # warm
     run_test(False, s, iter_time, v5_conf_path) # warm
     run_test(True, s, iter_time, sunbird_conf_path)  # cold
