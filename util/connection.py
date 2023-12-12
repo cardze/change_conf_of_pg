@@ -3,6 +3,7 @@ from util.config import db_config
 import os
 import csv
 
+            # centos() / postgresql (here!)
 
 class Connection:
     def __init__(self, params:dict, query:str) -> None:
@@ -10,6 +11,7 @@ class Connection:
         self.query = query
         self.connect.autocommit = True
         self.planning = None
+        self.prepared = "PREPARE" in self.query
 
     def get_pid(self):
         with self.connect.cursor() as cur:
@@ -20,8 +22,17 @@ class Connection:
 
     def get_explain_of_query(self):
         explain_prefix = "EXPLAIN (ANALYZE, COSTS, VERBOSE, BUFFERS, FORMAT JSON)\n"
+        ready_query = explain_prefix+self.query
         with self.connect.cursor() as cur:
-            cur.execute(explain_prefix+self.query)
+            if self.prepared :
+                pre_stmt = self.query.split("EXECUTE")[0] + "\n"
+                cur.execute(pre_stmt)
+                exe_query = "EXECUTE "+self.query.split("EXECUTE")[1]
+                ready_query = explain_prefix+exe_query
+                # actually call five time
+                # for i in range(5):
+                #     cur.execute(exe_query)
+            cur.execute(ready_query)
             ret = cur.fetchall()
             self.planning = ret[0][0][0]
             return ret[0][0][0]
@@ -71,3 +82,21 @@ def get_pg_config(params:dict):
         ret_query = cur.fetchall()
         new_ret = [[x[0],x[1]] for x in ret_query]
         return dict(new_ret)
+
+# developing
+def send_query_explain_with_prepared_stmt(params:dict, query:str):
+    pre_stmt = query.split("EXECUTE")[0]
+    exe_query = query.split("EXECUTE")[1]
+
+    explain_query = "EXPLAIN (ANALYZE, COSTS, VERBOSE, BUFFERS, FORMAT JSON)\n EXECUTE "+exe_query
+
+    with psycopg2.connect(**params) as conn:
+        # create a cursor
+        cur = conn.cursor()
+        # execute a statement
+        cur.execute(pre_stmt+explain_query)
+        ret = cur.fetchall()
+        # for i in cur.fetchall():
+        #     ret+=i
+        # print(ret[0][0][0])
+        return ret[0][0][0] # json format
