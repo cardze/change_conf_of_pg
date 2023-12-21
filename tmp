@@ -1,0 +1,5 @@
+select 
+    count(custom_fields_pick_id) AS count_pick_id, custom_field_id 
+    FROM dct_custom_fields_picks
+    GROUP BY custom_field_id
+    ORDER BY count_pick_id DESC;

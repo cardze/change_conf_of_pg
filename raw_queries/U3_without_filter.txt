@@ -1,0 +1,15 @@
+select dcf.label,
+       x.count
+from dct_custom_fields dcf
+inner join
+    (select custom_field_id,
+            count(*) as count
+     from dct_custom_field_values
+    --  where (length(value) > 0
+    --         OR custom_fields_pick_id is not null)
+    --      AND custom_field_id in (2564,
+    --                              2563,
+    --                              2565,
+    --                              2713,
+    --                              2712)
+     group by custom_field_id) x on x.custom_field_id = dcf.custom_field_id;

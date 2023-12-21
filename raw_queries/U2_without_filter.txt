@@ -1,0 +1,6 @@
+select item.custom_fields_pick_id,
+pick.label, count(*)
+from dct_custom_fields_picks pick
+inner join dct_custom_field_values item on pick.custom_fields_pick_id = item.custom_fields_pick_id
+-- where pick.custom_fields_pick_id in (select custom_fields_pick_id from dct_custom_fields_picks where custom_field_id = (2565) )
+group by item.custom_fields_pick_id, pick.label;
